@@ -35,7 +35,7 @@ export default function Component() {
             <p>
               Of course! Airplane turbulence happens when the plane encounters pockets of air that are moving
               differently. It is like sailing a boat on choppy water. These air pockets can make the plane feel like it is
-              bouncing or shaking a bit. It's completely normal and usually not dangerous at all.
+              bouncing or shaking a bit. It is completely normal and usually not dangerous at all.
             </p>
           </div>∫
           <Avatar>
@@ -72,7 +72,7 @@ export default function Component() {
   )
 }
 
-function ArrowUpIcon(props) {
+function ArrowUpIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
