@@ -34,7 +34,7 @@ export default function Component() {
           <div className="bg-primary rounded-lg p-4 max-w-[80%] text-primary-foreground">
             <p>
               Of course! Airplane turbulence happens when the plane encounters pockets of air that are moving
-              differently. It's like sailing a boat on choppy water. These air pockets can make the plane feel like it's
+              differently. It is like sailing a boat on choppy water. These air pockets can make the plane feel like it is
               bouncing or shaking a bit. It's completely normal and usually not dangerous at all.
             </p>
           </div>∫
