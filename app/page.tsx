@@ -1,25 +1,51 @@
-"use client"
-import { useState } from "react"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { getChatbotResponse } from "@/lib/gemini"
+"use client";
+import { useState } from "react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { getChatbotResponse } from "@/lib/gemini";
 
 export default function Component() {
-  const [messages, setMessages] = useState<{ role: string; text: string }[]>([])
-  const [inputMessage, setInputMessage] = useState("")
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isAITyping, setIsAITyping] = useState(false);
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "") return;
-    const newMessages = [...messages, { role: "user", text: inputMessage }]
-    setMessages(newMessages)
-    setInputMessage("")
-    console.log("I am in handleSendMessage")
-    const botResponse = await getChatbotResponse(inputMessage)
-    console.log(`input message is: ${inputMessage}. bot response is: ${botResponse}`)
-    setMessages([...newMessages, { role: "model", text: botResponse }])
-  }
 
+    const newUserMessage = { role: "user", content: inputMessage };
+    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    setInputMessage("");
+    setIsAITyping(true);
+
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+    const requestPayload = {
+      prompt: inputMessage,
+      chat_history: messages,
+    };
+
+    const response = await fetch(
+      "https://customer-support-api.vercel.app/api/v1/customer-support",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: origin,
+        },
+        body: JSON.stringify(requestPayload),
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const assistantMessage = { role: "assistant", content: data.response };
+      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+    } else {
+      console.error("Error fetching response");
+    }
+    setIsAITyping(false);
+  };
 
   return (
     <div className="flex flex-col h-screen text-black">
@@ -34,21 +60,49 @@ export default function Component() {
         </div>
       </header>
       <div className="flex-1 overflow-auto p-6 space-y-4">
-        { messages.map((message, index) => (
-          <div key={index} className={`flex items-start gap-4 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
-          <Avatar>
-            <AvatarImage src="/placeholder-user.jpg" alt={message.role} />
-            <AvatarFallback>{message.role === "user" ? "U" : "B"}</AvatarFallback>
-          </Avatar>
-          <div className={`bg-muted rounded-lg p-4 max-w-[80%] ${message.role === "user" ? "bg-blue-100" : "bg-gray-100"}`}>
-            <p>{message.text}</p>
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`flex items-start gap-4 ${
+              message.role === "user" ? "justify-end" : ""
+            }`}
+          >
+            {message.role === "user" ? (
+              <>
+                <div className={`rounded-lg p-4 max-w-[80%] bg-blue-100`}>
+                  <p>{message.content}</p>
+                </div>
+                <Avatar>
+                  <AvatarImage src="/placeholder-user.jpg" alt={message.role} />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+              </>
+            ) : (
+              <>
+                <Avatar>
+                  <AvatarImage src="/placeholder-user.jpg" alt={message.role} />
+                  <AvatarFallback>B</AvatarFallback>
+                </Avatar>
+                <div className={`rounded-lg p-4 max-w-[80%] bg-gray-100`}>
+                  <p>{message.content}</p>
+                </div>
+              </>
+            )}
           </div>
-        </div>
-        
         ))}
-          
       </div>
       <div className="bg-background border-t px-6 py-4">
+        {isAITyping && (
+          <div className="flex items-center gap-2 mb-2">
+            <Avatar>
+              <AvatarImage src="/placeholder-user.jpg" alt="assistant" />
+              <AvatarFallback>B</AvatarFallback>
+            </Avatar>
+            <p className="text-sm text-gray-500">
+              Typing<span className="animate-pulse">...</span>
+            </p>
+          </div>
+        )}
         <div className="relative">
           <Textarea
             placeholder="Message Customer Support..."
@@ -65,14 +119,20 @@ export default function Component() {
               }
             }}
           />
-          <Button type="button" size="icon" className="absolute w-8 h-8 top-3 right-3" onClick={handleSendMessage} disabled={inputMessage.trim() === ""}>
+          <Button
+            type="button"
+            size="icon"
+            className="absolute w-8 h-8 top-3 right-3"
+            onClick={handleSendMessage}
+            disabled={inputMessage.trim() === "" || isAITyping}
+          >
             <ArrowUpIcon className="w-4 h-4" />
             <span className="sr-only">Send</span>
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function ArrowUpIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -92,5 +152,5 @@ function ArrowUpIcon(props: React.SVGProps<SVGSVGElement>) {
       <path d="m5 12 7-7 7 7" />
       <path d="M12 19V5" />
     </svg>
-  )
+  );
 }
